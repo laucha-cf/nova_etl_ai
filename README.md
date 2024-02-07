@@ -1,18 +1,6 @@
 # **NOVA AI PROJECT**
 
-**Orden de Ejecución de Archivos:**
-
-## Obtener el JSON Completo:
-1. `GODMIGHTYAI`
-2. `json_create_table`
-
-## Generar el CSV con Metadata:
-1. `metadata`
-2. `agregar_comentarios`
-3. `reemplazar_comentarios`
-
-## Obtener el CSV con Mapeos RAW + CUR:
-1. `zip_raw_cur`
+## **Los Scripts están diseñados para obtener la Metadata necesaria para el LLM**
 
 
 ### Dependencias
