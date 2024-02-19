@@ -1,3 +1,8 @@
+"""
+Ingestar datos nuevos en ElasticSearch o reemplazar por datos nuevos.
+"""
+
+
 import warnings
 
 # Para ignorar todos los warnings
@@ -41,8 +46,14 @@ if __name__ == '__main__':
     index_name = "datos_cdg"
 
     for tabla, datos_tabla in tqdm(json_file.items(), desc="Indexando datos"):
-        # Indexar los datos en Elasticsearch
-        client.index(index=index_name, body=datos_tabla)
+        for id, datos_registro in datos_tabla.items():
+            # Verificar si el registro ya existe en el índice
+            if client.exists(index=index_name, id=id):
+                # Actualizar el registro existente
+                client.update(index=index_name, id=id, body={"doc": datos_registro})
+            else:
+                # Indexar un nuevo registro
+                client.index(index=index_name, id=id, body=datos_registro)
 
     print("Ingesta de datos completada exitosamente.")
 
