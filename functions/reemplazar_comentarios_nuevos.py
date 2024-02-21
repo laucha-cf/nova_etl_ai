@@ -7,9 +7,7 @@ from functions.obtener_metadata import describe_table
 
 
 path_metadata = 'data_consumo/metadata_hive_cdg_completo.csv'
-path_excel = 'data_excel/mejoras_ani.csv'
-df_metadata = pd.read_csv(path_metadata, sep='|')
-df_mejoras = pd.read_csv(path_excel)
+path_excel = 'data_excel/mejoras_aniv2.csv'
 
 def obtener_diccionario_raw_cur( json_file ):
     """ Obtenemos un diccionario con el formato:
@@ -25,7 +23,7 @@ def obtener_diccionario_raw_cur( json_file ):
     """
     pares_raw_cur = {}
 
-    for table_raw in tqdm( json_file.keys() ):
+    for table_raw in tqdm( json_file.keys(), desc='GENERANDO LISTA RAW CUR' ):
         if '1raw' in table_raw:
             db_raw, table_name_raw = table_raw.split('.')
             # Obtenemos lista de tablas afectadas
@@ -54,7 +52,7 @@ def obtener_diccionario_raw_cur( json_file ):
     
     return pares_raw_cur
 
-def reemplazar_por_comentarios_nuevos( pares_raw_cur:dict ):
+def reemplazar_por_comentarios_nuevos( pares_raw_cur:dict ) -> pd.DataFrame:
     """ Reemplazamos el comentario de tabla si existen modificaciones.
 
     Params
@@ -63,9 +61,11 @@ def reemplazar_por_comentarios_nuevos( pares_raw_cur:dict ):
     Return
     pares_raw_cur : Diccionario con el formato especificado anteriormente.
     """
+    df_mejoras = pd.read_csv(path_excel)
+    df_metadata = pd.read_csv(path_metadata, sep='|', index_col=False)
     df_metadata['base_tabla'] = df_metadata['base'] +'.'+df_metadata['tabla']
 
-    for index, row in tqdm( df_mejoras.iterrows(), 'REEMPLAZAR POR COMENTARIOS NUEVOS' ):
+    for index, row in tqdm( df_mejoras.iterrows(), desc='REEMPLAZAR POR COMENTARIOS NUEVOS' ):
         # Nombre de tabla a reemplazar en metadata
         nombre_tabla = row['Base.Tabla']
 
