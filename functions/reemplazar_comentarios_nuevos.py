@@ -40,7 +40,10 @@ def obtener_diccionario_raw_cur( json_file ):
                 # Si tiene 1 solo elemento, entonces esa es la tabla en curado
                 cur_table = list_affected_tables[0]
 
-            # Si llgué acá es porque tengo la tabla en raw + cur
+            #cur_table puede ser una lista o un único elemento
+            pares_raw_cur[table_raw] = cur_table
+            """
+            # Si llegué acá es porque tengo la tabla en raw + cur
             db_cur, table_name_cur = cur_table.split('.')
 
             create_raw = describe_table(db_raw, table_name_raw) 
@@ -49,8 +52,16 @@ def obtener_diccionario_raw_cur( json_file ):
                 #La cantidad de campos es igual
                 # Unimos tablas raw + cur
                 pares_raw_cur[table_raw] = cur_table
+            """
     
     return pares_raw_cur
+
+def reemplazar_comment_curado( pares_raw_cur, df_metadata, comentario_tabla, nombre_tabla ):
+    tabla_curado = pares_raw_cur[nombre_tabla]
+    cond_cur = (df_metadata['base_tabla'] == tabla_curado) & (df_metadata['campo'].isna())
+    df_metadata.loc[cond_cur, 'comentario'] = comentario_tabla
+    return df_metadata
+
 
 def reemplazar_por_comentarios_nuevos( pares_raw_cur:dict ) -> pd.DataFrame:
     """ Reemplazamos el comentario de tabla si existen modificaciones.
@@ -78,23 +89,28 @@ def reemplazar_por_comentarios_nuevos( pares_raw_cur:dict ) -> pd.DataFrame:
             # Existen filas vacías o el índice no existe
             continue
 
-        # Limpio el resultado
-        match = re.search(r"'(.*?)'", comentario_nuevo)
+        texto = re.sub(r"[\"']", "", comentario_nuevo)
+        texto = re.sub(r"\n", "", texto)
 
-        if match:
-            comentario_tabla = match.group(1)
 
-            # Reemplazamos en RAW por el nuevo comentario
-            cond_raw = (df_metadata['base_tabla'] == nombre_tabla) & (df_metadata['campo'].isna())
-            df_metadata.loc[cond_raw, 'comentario'] = comentario_tabla
+        if texto:
+            comentario_tabla = texto
+        else:
+            comentario_tabla = comentario_nuevo
+            
+        # Reemplazamos en RAW por el nuevo comentario
+        cond_raw = (df_metadata['base_tabla'] == nombre_tabla) & (df_metadata['campo'].isna())
+        df_metadata.loc[cond_raw, 'comentario'] = comentario_tabla
 
-            #Obtengo la misma tabla en curado
-            try:
-                tabla_curado = pares_raw_cur[nombre_tabla]
-                cond_cur = (df_metadata['base_tabla'] == tabla_curado) & (df_metadata['campo'].isna())
-                df_metadata.loc[cond_cur, 'comentario'] = comentario_tabla
-            except KeyError as e:
-                continue
+        #Obtengo la misma tabla en curado
+        try:
+            df_metadata = reemplazar_comment_curado( pares_raw_cur, 
+                                        df_metadata, 
+                                        comentario_tabla, 
+                                        nombre_tabla )
+
+        except KeyError as e:
+            continue
 
     df_metadata = df_metadata.drop(columns=['base_tabla'])
     
